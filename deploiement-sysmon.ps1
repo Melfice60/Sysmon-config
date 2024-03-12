@@ -1,7 +1,7 @@
 $VersionPattern = "v?(\d{2}\.\d{1,2})"
 $TempFolder = "$env:TEMP\Sysmon"
 $LogFile = "$env:TEMP\SysmonUpdate.log"
-$config_file = "sysmon_config_high.xml"
+$config_file = "" #A modifier en fonction des besoins
 $check_exist = Get-Service -Name Sysmon*
 
 
