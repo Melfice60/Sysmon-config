@@ -2,38 +2,8 @@ $VersionPattern = "v?(\d{2}\.\d{1,2})"
 $TempFolder = "$env:TEMP\Sysmon"
 $LogFile = "$env:TEMP\SysmonUpdate.log"
 $config_file = "sysmon_config_high.xml"
+$check_exist = Get-Service -Name Sysmon*
 
-Function Get-SysmonLocation{
-    return Get-ChildItem $env:SystemRoot -Filter Sysmon64.exe -ErrorAction SilentlyContinue | Select -First 1
-}
-
-Function Get-SysmonInstalledVersion{
-    $exe = Get-SysmonLocation
-    if($exe){
-        return $exe.VersionInfo.ProductVersion
-    }
-    return $false
-}
-
-Function Get-SysmonCurrentVersion{
-    #$viaCMD = & cmd /c curl "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon" | findstr h1
-    #$Uri = "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon" #h1 - request is tarpitted
-    $Uri = "https://community.chocolatey.org/packages/sysmon" #title
-    $Request = Invoke-WebRequest $Uri -UseBasicParsing
-    if($Request){
-        $Document = New-Object -Com 'HTMLFile'
-        $Document.IHTMLDocument2_Write($Request.RawContent)
-        $h1 = $Document.getElementsByTagName("title")
-        if($h1){
-            $CurrentVersionText = $h1[0].innerText
-            if($CurrentVersionText -match $VersionPattern){
-                $CurrentVersion = $Matches[1]
-                return $CurrentVersion
-            }
-        }
-    }
-    return $false
-}
 
 Function New-TempEnvironment{
     if(-not (Test-Path $TempFolder)){
@@ -59,18 +29,11 @@ Function Unzip-File{
     "Extracted Sysmon.zip to $TempFolder"
 }
 
-Function Uninstall-Sysmon{
-    $Installed = Get-SysmonLocation
-    if($Installed){
-        ""
-        & sysmon64 -u
-        $Installed | Remove-Item
-        ""
-        "Uninstalled $($Installed.FullName)"
-    } else {
-        return "Not installed"
-    }    
+
+Function Retrieve-Config{
+	Invoke-WebRequest -Uri https://raw.githubusercontent.com/melfice60/sysmon-config/master/$config_file -Outfile sysmonconfig-export.xml
 }
+
 
 Function Install-Sysmon{
     ""
@@ -78,25 +41,16 @@ Function Install-Sysmon{
     ""
 }
 
-Function Retrieve-Config{
-	Invoke-WebRequest -Uri https://raw.githubusercontent.com/melfice60/sysmon-config/master/$config_file -Outfile sysmonconfig-export.xml
-}
-
-$InstalledVersion = Get-SysmonInstalledVersion
-$CurrentVersion = Get-SysmonCurrentVersion
 Get-Date | Tee-Object -FilePath $LogFile -Append
-"Installed: $InstalledVersion" | Tee-Object -FilePath $LogFile -Append
-"Current: $CurrentVersion" | Tee-Object -FilePath $LogFile -Append
-if($CurrentVersion -and $InstalledVersion -ne $CurrentVersion){
-   "Installing version: $CurrentVersion" | Tee-Object -FilePath $LogFile -Append
-   
-   Uninstall-Sysmon | Tee-Object -FilePath $LogFile -Append
+
+if(-not $check_exist){
    New-TempEnvironment | Tee-Object -FilePath $LogFile -Append
    Download-SysmonZip | Tee-Object -FilePath $LogFile -Append
    Unzip-File | Tee-Object -FilePath $LogFile -Append
+   Retrieve-Config | Tee-Object -FilePath $LogFile -Append
    Install-Sysmon | Tee-Object -FilePath $LogFile -Append
    Remove-TempEnvironment | Tee-Object -FilePath $LogFile -Append
 } else {
-    "No update will occur." | Tee-Object -FilePath $LogFile -Append
+    "Sysmon already exist." | Tee-Object -FilePath $LogFile -Append
 }
 
