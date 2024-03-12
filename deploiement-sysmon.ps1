@@ -1,7 +1,7 @@
 $VersionPattern = "v?(\d{2}\.\d{1,2})"
 $TempFolder = "$env:TEMP\Sysmon"
 $LogFile = "$env:TEMP\SysmonUpdate.log"
-$config-file = "sysmon_config_high.xml"
+$config_file = "sysmon_config_high.xml"
 
 Function Get-SysmonLocation{
     return Get-ChildItem $env:SystemRoot -Filter Sysmon64.exe -ErrorAction SilentlyContinue | Select -First 1
