@@ -79,7 +79,7 @@ Function Install-Sysmon{
 }
 
 Function Retrieve-Config{
-	Invoke-WebRequest -Uri https://raw.githubusercontent.com/melfice60/sysmon-config/master/$config-file -Outfile sysmonconfig-export.xml
+	Invoke-WebRequest -Uri https://raw.githubusercontent.com/melfice60/sysmon-config/master/$config_file -Outfile sysmonconfig-export.xml
 }
 
 $InstalledVersion = Get-SysmonInstalledVersion
